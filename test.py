@@ -4,10 +4,19 @@ import os
 def addPysparkPath():
     try:
         os.environ["PYSPARK_PYTHON"] = "/usr/bin/python2"
-        sys.path.append(os.path.join(os.environ['SPARK_HOME'], "python"))
+        spark_home = os.environ['SPARK_HOME']
     except KeyError:
         print "SPARK_HOME not set"
         sys.exit(1)
+
+    # path for pyspark and py4j
+    spark_pylib = os.path.join(spark_home, "python", "lib")
+    py4jlib = [ziplib
+               for ziplib in os.listdir(spark_pylib)
+               if ziplib.startswith('py4j') and ziplib.endswith('.zip')][0]
+    py4jlib = os.path.join(spark_pylib, py4jlib)
+    sys.path.append(os.path.join(spark_home, "python"))
+    sys.path.append(py4jlib)
 
 addPysparkPath()
 
@@ -16,7 +25,7 @@ from pyspark.context import SparkContext
 from pyspark.storagelevel import StorageLevel
 
 conf = SparkConf()
-conf.setMaster('local[4]').setAppName('SparkLit test')
+conf.setMaster('local[*]').setAppName('SparkLit test')
 sc = SparkContext(conf=conf)
 logger = sc._jvm.org.apache.log4j
 logger.LogManager.getLogger("org"). setLevel( logger.Level.ERROR )
